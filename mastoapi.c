@@ -648,6 +648,7 @@ static int is_valid_post_type(const char *post_type)
 {
     return !xs_is_null(post_type) &&
            (strcmp(post_type, "Note") == 0 ||
+            strcmp(post_type, "Event") == 0 ||
             strcmp(post_type, "Article") == 0 ||
             strcmp(post_type, "Question") == 0 ||
             strcmp(post_type, "Page") == 0);
@@ -1131,7 +1132,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "sensitive",    tmp);
 
     tmp = xs_dict_get(msg, "summary");
-    if (xs_is_null(tmp))
+    if (xs_is_null(tmp) || strcmp(type, "Event") == 0)
         tmp = "";
 
     st = xs_dict_append(st, "spoiler_text", tmp);
@@ -2163,7 +2164,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                                 /* add only posts by the author */
                                 if (!xs_is_null(msg_id) &&
-                                    strcmp(xs_dict_get(msg, "type"), "Note") == 0 &&
+                                    xs_match(xs_dict_get_def(msg, "type", ""), "Note|Event") &&
                                     is_msg_mine(&snac2, xs_dict_get(msg, "id")) && is_msg_public(msg)) {
 
                                     /* if max_id is set, skip entries until we find it */
@@ -3346,6 +3347,67 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 }
 
 
+static xs_dict *mastoapi_event(xs_dict *msg, const xs_dict *args)
+/* turns a Note into an Event if event_* arguments are given */
+{
+    const char *start = xs_dict_get(args, "event_start");
+    const char *name  = xs_or(xs_dict_get(args, "event_name"), xs_dict_get(msg, "name"));
+
+    if (xs_is_string(start) && *start && xs_is_string(name) && *name) {
+        const char *end   = xs_dict_get(args, "event_end");
+        const char *url   = xs_dict_get(args, "event_url");
+        const char *lname = xs_dict_get(args, "event_location_name");
+        const char *laddr = xs_dict_get(args, "event_location_address");
+        const char *lat   = xs_dict_get(args, "event_latitude");
+        const char *lon   = xs_dict_get(args, "event_longitude");
+        xs *n_name = xs_dup(name);
+        xs *n_url  = xs_dup(xs_is_string(url) && *url ? url : xs_dict_get(msg, "id"));
+        xs *place  = xs_dict_new();
+        int n = 0;
+
+        msg = xs_dict_set(msg, "type",      "Event");
+        msg = xs_dict_set(msg, "name",      n_name);
+        msg = xs_dict_set(msg, "startTime", start);
+        msg = xs_is_string(end) && *end ? xs_dict_set(msg, "endTime", end) : xs_dict_del(msg, "endTime");
+        msg = xs_dict_set(msg, "url",       n_url);
+
+        place = xs_dict_append(place, "type", "Place");
+
+        if (xs_is_string(lname) && *lname) {
+            place = xs_dict_append(place, "name", lname);
+            n++;
+        }
+
+        if (xs_is_string(laddr) && *laddr) {
+            xs *addr = xs_dict_new();
+            addr = xs_dict_append(addr, "type", "PostalAddress");
+            addr = xs_dict_append(addr, "streetAddress", laddr);
+            place = xs_dict_append(place, "address", addr);
+            n++;
+        }
+
+        if (!xs_is_null(lat) && !xs_is_null(lon)) {
+            xs *nlat = xs_number_new(xs_number_get(lat));
+            xs *nlon = xs_number_new(xs_number_get(lon));
+            place = xs_dict_append(place, "latitude",  nlat);
+            place = xs_dict_append(place, "longitude", nlon);
+            n++;
+        }
+
+        msg = n ? xs_dict_set(msg, "location", place) : xs_dict_del(msg, "location");
+    }
+
+    /* Mastodon shows an Event's summary as its body, not as a CW */
+    if (strcmp(xs_dict_get_def(msg, "type", ""), "Event") == 0) {
+        xs *content = xs_dup(xs_dict_get_def(msg, "content", ""));
+        msg = xs_dict_set(msg, "summary",   content);
+        msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_FALSE));
+    }
+
+    return msg;
+}
+
+
 int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype)
@@ -3464,6 +3526,9 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/statuses") == 0) { /** **/
+        if (logged_in && xs_dict_get(args, "event_start") && !xs_dict_get(args, "event_name"))
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
+        else
         if (logged_in) {
             /* post a new Note */
             const char *content          = xs_dict_get(args, "status");
@@ -3565,6 +3630,8 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
                 msg = xs_dict_set(msg, "summary",   summary);
             }
+
+            msg = mastoapi_event(msg, args);
 
             /* scheduled? */
             const char *scheduled_at = xs_dict_get(args, "scheduled_at");
@@ -4492,6 +4559,8 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
                             msg = xs_dict_set(msg, "attachment", n_att);
                         }
                     }
+
+                    msg = mastoapi_event(msg, args);
 
                     /* overwrite object, not updating the indexes */
                     const char *id = xs_dict_get(msg, "id");
