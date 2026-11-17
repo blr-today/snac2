@@ -4,7 +4,7 @@
 
 Fixed bug in static media purging; sometimes, attachments from scheduled and/or draft posts were incorrectly deleted.
 
-Updated Greek and Italian translations (contributed by Dimitris T., fidiben).
+Updated Greek and Italian translations (contributed by Dimitris T., fidiben), new Galician translation (contributed by ghose).
 
 ## 2.97
 
