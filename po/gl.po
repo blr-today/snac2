@@ -305,11 +305,11 @@ msgstr "Mostra agrado por esta publicación"
 
 #: html.c:2151 html.c:5884
 msgid "Unlike"
-msgstr "Non gustar"
+msgstr "Non gusto"
 
 #: html.c:2151
 msgid "Nah don't like it that much"
-msgstr "Nah, non é que me guste moito"
+msgstr "Nah, xa non me gusta"
 
 #: html.c:2157 html.c:6031
 msgid "Unpin"
@@ -952,7 +952,7 @@ msgstr "Non mostrar publicacións publicadas nestes idiomas:"
 
 #: html.c:3587 html.c:5229
 msgid "Liked, boosted or reacted posts"
-msgstr "Publicacións promovidas, gustadas ou ás que reaccionaches"
+msgstr "Publicacións promovidas, gustadas ou con reaccións"
 
 #: html.c:3588
 msgid "admirations"
@@ -966,7 +966,7 @@ msgstr ""
 
 #: html.c:4074 html.c:5932
 msgid "Unmark as cool"
-msgstr "Desmarcar como chachi"
+msgstr "Non recibir notificacións"
 
 #: html.c:4075
 msgid "No longer notify me whenever this user posts"
@@ -974,7 +974,7 @@ msgstr "Deixar de recibir notificacións cando esta conta publique"
 
 #: html.c:4078 html.c:5928
 msgid "Mark as cool"
-msgstr "Marcar como chachi"
+msgstr "Activar notificacións"
 
 #: html.c:4079
 msgid "Notify me whenever this user posts"
@@ -986,4 +986,4 @@ msgstr "Mencións web"
 
 #: html.c:4368
 msgid "Posts from cool users"
-msgstr "Publicacións de contas que molan"
+msgstr "Publicacións de contas que prestan"
