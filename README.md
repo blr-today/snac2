@@ -170,6 +170,7 @@ This will:
 - [A compilation of themes for snac (by Ворон)](https://codeberg.org/voron/snac-style).
 - [A cool, elegant theme (by Haijo7)](https://codeberg.org/Haijo7/snac-custom-css).
 - [A terminal-like theme (by Tetra)](https://codeberg.org/ERROR404NULLNOTFOUND/snac-terminal-theme).
+- [A dark and colorful theme following draculatheme.com color palette (by ghose)](https://codeberg.org/ghose/snac2-dracula-theme).
 
 ## License
 
