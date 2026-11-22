@@ -1532,7 +1532,7 @@ xs_dict *msg_update(snac *snac, const xs_dict *object)
 
     const char *type = xs_dict_get(object, "type");
 
-    if (strcmp(type, "Note") == 0) {
+    if (xs_match(type, "Note|Event")) {
         msg = xs_dict_append(msg, "to", xs_dict_get(object, "to"));
         msg = xs_dict_append(msg, "cc", xs_dict_get(object, "cc"));
     }
@@ -4049,7 +4049,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
                 const char *type = xs_dict_get(i, "type");
                 const char *id   = xs_dict_get(i, "id");
 
-                if (type && id && strcmp(type, "Note") == 0 && is_msg_mine(&snac, id)) {
+                if (type && id && xs_match(type, "Note|Event") && is_msg_mine(&snac, id)) {
                     if (is_msg_public(i)) {
                         xs *c_msg = msg_create(&snac, i);
                         list = xs_list_append(list, c_msg);

@@ -2613,7 +2613,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     xs_html *snac_content = NULL;
 
-    v = xs_dict_get(msg, "summary");
+    /* an Event's summary is its description, not a CW */
+    v = strcmp(type, "Event") ? xs_dict_get(msg, "summary") : NULL;
 
     /* if it has summary or marked as sensitive - add CW */
     /* come clients don't set "sensitive" flag properly */
@@ -3219,6 +3220,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         const xs_number *longitude = xs_dict_get(location, "longitude");
         const char *name = xs_dict_get(location, "name");
         const char *address = xs_dict_get(location, "address");
+        if (xs_is_dict(address))
+            address = xs_dict_get(address, "streetAddress");
         xs *label_list = xs_list_new();
 
         if (xs_type(name) == XSTYPE_STRING)

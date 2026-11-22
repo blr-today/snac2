@@ -787,7 +787,7 @@ void export_posts(snac *user)
 
         const char *type = xs_dict_get(obj, "type");
 
-        if (!xs_is_string(type) || strcmp(type, "Note"))
+        if (!xs_is_string(type) || (strcmp(type, "Note") && strcmp(type, "Event")))
             continue;
 
         const char *atto = get_atto(obj);
