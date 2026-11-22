@@ -1,0 +1,36 @@
+name: Upstream
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+jobs:
+  check:
+    # Fails when upstream has a release tag that event-publication lacks
+    name: Latest tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      UPSTREAM: https://codeberg.org/grunfink/snac2.git
+      FORK: ${{ github.server_url }}/${{ github.repository }}.git
+      BRANCH: event-publication
+    steps:
+    - name: Compare tags
+      run: |
+        git init -q fork && cd fork
+        tag=$(git ls-remote --tags --refs "$UPSTREAM" | cut -f2 | sed 's|^refs/tags/||' | sort -V | tail -1)
+        test -n "$tag"
+        git fetch -q --filter=tree:0 "$FORK" "refs/heads/$BRANCH:refs/heads/$BRANCH"
+        git fetch -q --filter=tree:0 --no-tags "$UPSTREAM" "refs/tags/$tag:refs/tags/$tag"
+        if git merge-base --is-ancestor "refs/tags/$tag^{commit}" "refs/heads/$BRANCH"; then
+          echo "\`$BRANCH\` includes upstream \`$tag\`" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "::error::Upstream released $tag, rebase $BRANCH onto it"
+          echo "Upstream \`$tag\` is missing from \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
